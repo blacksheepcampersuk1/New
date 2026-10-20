@@ -136,7 +136,15 @@
       'Twin%20Bench.glb': '135deg 75deg auto',
       'Twin%20Bench%20Cushion.glb': '135deg 75deg auto',
       'Ewe.glb': '315deg 75deg auto',
-      'Belted%20Ewe.glb': '315deg 75deg auto'
+      'Ewe%20Cushion.glb': '315deg 75deg auto',
+      'Belted%20Ewe.glb': '315deg 75deg auto',
+      'Belted%20Ewe%20Cushion.glb': '315deg 75deg auto'
+    };
+
+    const MODEL_CUSHION_FILES = {
+      'Twin%20Bench.glb': 'Twin%20Bench%20Cushion.glb',
+      'Ewe.glb': 'Ewe%20Cushion.glb',
+      'Belted%20Ewe.glb': 'Belted%20Ewe%20Cushion.glb'
     };
 
     const ROTATION_STEP = 45;
@@ -147,8 +155,8 @@
     let savedOrbitToRestore = null;
 
     function getActiveModelFile() {
-      if (selectedModel === 'Twin%20Bench.glb' && selectedCushions === 'Cushions') {
-        return 'Twin%20Bench%20Cushion.glb';
+      if (selectedCushions === 'Cushions') {
+        return MODEL_CUSHION_FILES[selectedModel] || selectedModel;
       }
       return selectedModel;
     }
