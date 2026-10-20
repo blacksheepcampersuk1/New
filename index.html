@@ -85,8 +85,14 @@
         <button class="size-btn" data-size="Ewe.glb">Ewe</button>
         <button class="size-btn active" data-size="Twin%20Bench.glb">Twin-bench</button>
         <button class="size-btn" data-size="Belted%20Ewe.glb">Belted Ewe</button>
-        <button class="size-btn" data-size="Cushions.glb">Cushions</button>
-        <button class="size-btn" data-size="Without%20Cushions.glb">Without Cushions</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <span class="row-title">Cushions:</span>
+      <div class="btn-group">
+        <button class="cushion-btn active" data-cushion="Cushions">Cushions</button>
+        <button class="cushion-btn" data-cushion="Without%20Cushions">Without Cushions</button>
       </div>
     </div>
 
@@ -123,14 +129,13 @@
     const viewControls = document.querySelector("#view-controls");
 
     let selectedModel = "Twin%20Bench.glb";
+    let selectedCushions = "Cushions";
     let selectedDoor = "Green";
 
     const MODEL_DEFAULT_ORBIT = {
       'Twin%20Bench.glb': '135deg 75deg auto',
       'Ewe.glb': '315deg 75deg auto',
-      'Belted%20Ewe.glb': '315deg 75deg auto',
-      'Cushions.glb': '315deg 75deg auto',
-      'Without%20Cushions.glb': '315deg 75deg auto'
+      'Belted%20Ewe.glb': '315deg 75deg auto'
     };
 
     const ROTATION_STEP = 45;
@@ -162,17 +167,6 @@
         }
       } catch (err) {
         console.warn("Error applying variant:", err);
-      }
-    }
-
-    function getOrbitFromString(orbitString) {
-      try {
-        const parts = orbitString.trim().split(/\s+/);
-        if (parts.length < 3) return null;
-        const match = parts[0].match(/(-?[0-9.]+)deg/);
-        return match ? parseFloat(match[1]) : null;
-      } catch (err) {
-        return null;
       }
     }
 
@@ -282,6 +276,15 @@
       });
     });
 
+    document.querySelectorAll(".cushion-btn").forEach(button => {
+      button.addEventListener("click", (e) => {
+        document.querySelectorAll(".cushion-btn").forEach(btn => btn.classList.remove("active"));
+        e.target.classList.add("active");
+        selectedCushions = e.target.getAttribute("data-cushion");
+        updateConfigurator();
+      });
+    });
+
     document.querySelectorAll(".door-btn").forEach(button => {
       button.addEventListener("click", (e) => {
         document.querySelectorAll(".door-btn").forEach(btn => btn.classList.remove("active"));
@@ -310,9 +313,7 @@
     const WIX_FORM_URLS = {
       'Ewe.glb': 'https://blacksheepcampers.wixforms.com/f/7516869375056413788',
       'Twin%20Bench.glb': 'https://blacksheepcampers.wixforms.com/f/7516871135326110811',
-      'Belted%20Ewe.glb': 'https://blacksheepcampers.wixforms.com/f/7516871286258140321',
-      'Cushions.glb': 'https://blacksheepcampers.wixforms.com/f/7516869375056413788',
-      'Without%20Cushions.glb': 'https://blacksheepcampers.wixforms.com/f/7516869375056413788'
+      'Belted%20Ewe.glb': 'https://blacksheepcampers.wixforms.com/f/7516871286258140321'
     };
 
     // Modal elements
