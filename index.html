@@ -205,9 +205,16 @@
 
     .size-btn,
     .door-btn,
-    .cushion-btn {
+    .cushion-btn,
+    .layout-btn {
       min-width: 56px;
       padding: 10px 11px;
+    }
+
+    .layout-btn {
+      min-width: 0;
+      flex: 1;
+      text-align: center;
     }
 
     .door-btn {
@@ -400,6 +407,15 @@
 
           <div class="configurator-panel">
             <div class="row">
+              <span class="row-title">Layout</span>
+              <div class="btn-group">
+                <button class="layout-btn active" type="button" data-size="Twin%20Bench.glb">Twin Bench</button>
+                <button class="layout-btn" type="button" data-size="Ewe.glb">Ewe</button>
+                <button class="layout-btn" type="button" data-size="Belted%20Ewe.glb">Belted Ewe</button>
+              </div>
+            </div>
+
+            <div class="row">
               <span class="row-title">Color</span>
               <div class="btn-group">
                 <button class="door-btn active" type="button" data-door="Green" aria-label="Green"></button>
@@ -492,6 +508,13 @@
     let initialLoadDone = false;
     let userHasManualView = false;
     let savedOrbitToRestore = null;
+
+    function syncModelButtons(selectedValue) {
+      document.querySelectorAll('.size-btn, .layout-btn').forEach((button) => {
+        const matches = button.getAttribute('data-size') === selectedValue;
+        button.classList.toggle('active', matches);
+      });
+    }
 
     function getActiveModelFile() {
       if (selectedCushions === 'Cushions') {
@@ -596,6 +619,7 @@
     function updateConfigurator() {
       const targetFileUrl = getActiveModelFile();
       const currentSrcAttr = modelViewer.getAttribute('src');
+      syncModelButtons(selectedModel);
 
       if (currentSrcAttr !== targetFileUrl) {
         showSpinnerMessage('Loading model…');
@@ -616,11 +640,11 @@
       }
     }
 
-    document.querySelectorAll('.size-btn').forEach((button) => {
+    document.querySelectorAll('.size-btn, .layout-btn').forEach((button) => {
       button.addEventListener('click', (e) => {
-        document.querySelectorAll('.size-btn').forEach((btn) => btn.classList.remove('active'));
-        e.target.classList.add('active');
-        selectedModel = e.target.getAttribute('data-size');
+        const nextModel = e.target.getAttribute('data-size');
+        selectedModel = nextModel;
+        syncModelButtons(selectedModel);
 
         if (userHasManualView) {
           try { savedOrbitToRestore = modelViewer.cameraOrbit || null; } catch (err) { savedOrbitToRestore = null; }
