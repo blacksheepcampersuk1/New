@@ -161,6 +161,14 @@
       return selectedModel;
     }
 
+    function getModelVariantName(variantName) {
+      const activeModel = getActiveModelFile();
+      if (activeModel && activeModel.includes('Cushion') && (variantName === 'Black' || variantName === 'Blue')) {
+        return variantName === 'Black' ? 'Blue' : 'Black';
+      }
+      return variantName;
+    }
+
     function showViewer() {
       spinner.style.display = "none";
       modelViewer.style.visibility = "visible";
@@ -177,15 +185,12 @@
     showSpinnerMessage("Loading model…");
 
     function applyVariant(name) {
-      const variantName = name || selectedDoor;
+      const variantName = getModelVariantName(name || selectedDoor);
       try {
         if (typeof modelViewer.variantName !== "undefined") {
           modelViewer.variantName = variantName;
         }
         modelViewer.setAttribute('variant-name', variantName);
-        if (modelViewer.getAttribute('variant-name') !== variantName) {
-          modelViewer.setAttribute('variant-name', variantName);
-        }
       } catch (err) {
         console.warn("Error applying variant:", err);
       }
@@ -260,7 +265,7 @@
 
     function updateConfigurator() {
       const targetFileUrl = getActiveModelFile();
-      const targetVariantName = `${selectedDoor}`;
+      const targetVariantName = getModelVariantName(selectedDoor);
       const currentSrcAttr = modelViewer.getAttribute("src");
 
       if (currentSrcAttr !== targetFileUrl) {
