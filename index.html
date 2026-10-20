@@ -91,8 +91,8 @@
     <div class="row">
       <span class="row-title">Cushions:</span>
       <div class="btn-group">
-        <button class="cushion-btn active" data-cushion="Cushions">Cushions</button>
-        <button class="cushion-btn" data-cushion="Without%20Cushions">Without Cushions</button>
+        <button class="cushion-btn" data-cushion="Cushions">Cushions</button>
+        <button class="cushion-btn active" data-cushion="Without%20Cushions">Without Cushions</button>
       </div>
     </div>
 
@@ -129,7 +129,7 @@
     const viewControls = document.querySelector("#view-controls");
 
     let selectedModel = "Twin%20Bench.glb";
-    let selectedCushions = "Cushions";
+    let selectedCushions = "Without%20Cushions";
     let selectedDoor = "Green";
 
     const MODEL_DEFAULT_ORBIT = {
@@ -177,9 +177,14 @@
     showSpinnerMessage("Loading model…");
 
     function applyVariant(name) {
+      const variantName = name || selectedDoor;
       try {
         if (typeof modelViewer.variantName !== "undefined") {
-          modelViewer.variantName = name;
+          modelViewer.variantName = variantName;
+        }
+        modelViewer.setAttribute('variant-name', variantName);
+        if (modelViewer.getAttribute('variant-name') !== variantName) {
+          modelViewer.setAttribute('variant-name', variantName);
         }
       } catch (err) {
         console.warn("Error applying variant:", err);
@@ -219,12 +224,21 @@
       modelViewer.setAttribute("src", fileName);
     }
 
+    function refreshVariantAfterLoad() {
+      requestAnimationFrame(() => {
+        applyVariant(selectedDoor);
+      });
+      setTimeout(() => {
+        applyVariant(selectedDoor);
+      }, 150);
+    }
+
     modelViewer.addEventListener("load", () => {
       if (!initialLoadDone) {
         modelViewer.cameraOrbit = MODEL_DEFAULT_ORBIT[getActiveModelFile()] || DEFAULT_ORBIT;
         initialLoadDone = true;
       }
-      applyVariant(selectedDoor);
+      refreshVariantAfterLoad();
       showViewer();
     }, { once: true });
 
@@ -264,7 +278,7 @@
             } catch (err) { }
           }
 
-          applyVariant(targetVariantName);
+          refreshVariantAfterLoad();
           showViewer();
         }, { once: true });
       } else {
@@ -324,6 +338,9 @@
         savedOrbitToRestore = modelViewer.cameraOrbit;
       } catch (err) { }
     });
+
+    // Run once on first load to ensure the initial selection matches the actual model shown.
+    updateConfigurator();
 
     // Map model filename strings -> Wix form page URL (Ewe & Belted provided)
     const WIX_FORM_URLS = {
