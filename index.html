@@ -251,6 +251,18 @@
     .door-btn[data-door="Black"] { --swatch-color: #171717; }
     .door-btn[data-door="Cream"] { --swatch-color: #efeae1; }
 
+    .door-btn.hexa-btn {
+      min-width: 90px;
+      width: auto;
+      height: auto;
+      padding: 10px 12px;
+      font-size: 12px;
+      text-align: center;
+      background: #f5f4f1;
+      border: 1px solid #2d2d2d;
+      color: #1b1b1b;
+    }
+
     .door-btn.active::before {
       box-shadow: inset 0 0 0 2px rgba(255,255,255,0.9), 0 0 0 2px rgba(17,17,17,0.9);
     }
@@ -259,6 +271,13 @@
       background: transparent;
       border-color: rgba(0,0,0,0.7);
       box-shadow: none;
+    }
+
+    .door-btn.hexa-btn.active {
+      background: var(--button-active);
+      color: white;
+      border-color: var(--button-active);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
     }
 
     .cushion-btn {
@@ -422,14 +441,15 @@
                 <button class="door-btn" type="button" data-door="Blue" aria-label="Blue"></button>
                 <button class="door-btn" type="button" data-door="Black" aria-label="Black"></button>
                 <button class="door-btn" type="button" data-door="Cream" aria-label="Cream"></button>
+                <button class="door-btn hexa-btn" type="button" data-door="Hexa ply" aria-label="Hexa ply">Hexa ply</button>
               </div>
             </div>
 
             <div class="row">
               <span class="row-title">Wheelbase</span>
               <div class="btn-group">
-                <button class="size-btn" type="button" data-size="Ewe.glb">SWB</button>
-                <button class="size-btn active" type="button" data-size="Twin%20Bench.glb">LWB</button>
+                <button class="size-btn" type="button" data-wheelbase="SWB">SWB</button>
+                <button class="size-btn active" type="button" data-wheelbase="LWB">LWB</button>
               </div>
             </div>
 
@@ -464,7 +484,7 @@
   <div id="form-modal" role="dialog" aria-modal="true" style="position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.6); z-index:9999;">
     <div id="form-modal-card" style="width:92%; max-width:960px; height:86%; background:#fff; border-radius:10px; overflow:hidden; position:relative; box-shadow:0 20px 40px rgba(0,0,0,0.4);">
       <button id="form-modal-close" aria-label="Close form" style="position:absolute; right:12px; top:12px; z-index:5; padding:8px 10px; border-radius:6px; border:1px solid #ddd; background:#fff; cursor:pointer;">Close</button>
-      <div id="form-modal-spinner" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.6)); color:#333; font-weight:600;">Loading form…</div>
+      <div id="form-modal-spinner" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7)); z-index:4; font-weight:700; color:#1f1f1f;">Loading form…</div>
       <iframe id="form-modal-iframe" src="" frameborder="0" title="Quote form" style="width:100%; height:100%; border:0; display:block;"></iframe>
     </div>
   </div>
@@ -477,6 +497,22 @@
     let selectedModel = 'Twin%20Bench.glb';
     let selectedCushions = 'Without%20Cushions';
     let selectedDoor = 'Green';
+    let selectedWheelbase = 'LWB';
+
+    const PRICE_FALLBACK = {
+      'Twin Bench': {
+        'With Cushions': { SWB: { Laminate: 2750, 'Hexa ply': 2550 }, LWB: { Laminate: 3020, 'Hexa ply': 2820 } },
+        'Without Cushions': { SWB: { Laminate: 2095, 'Hexa ply': 1895 }, LWB: { Laminate: 2295, 'Hexa ply': 2095 } }
+      },
+      Ewe: {
+        'With Cushions': { SWB: { Laminate: 2250, 'Hexa ply': 2050 }, LWB: { Laminate: 2520, 'Hexa ply': 2320 } },
+        'Without Cushions': { SWB: { Laminate: 1595, 'Hexa ply': 1395 }, LWB: { Laminate: 1795, 'Hexa ply': 1595 } }
+      },
+      'Belted Ewe': {
+        'With Cushions': { SWB: { Laminate: 0, 'Hexa ply': 0 }, LWB: { Laminate: 0, 'Hexa ply': 0 } },
+        'Without Cushions': { SWB: { Laminate: 0, 'Hexa ply': 0 }, LWB: { Laminate: 0, 'Hexa ply': 0 } }
+      }
+    };
 
     const MODEL_DEFAULT_ORBIT = {
       'Twin%20Bench.glb': '135deg 75deg auto',
@@ -499,12 +535,87 @@
     let initialLoadDone = false;
     let userHasManualView = false;
     let savedOrbitToRestore = null;
+    let priceDataPromise = null;
 
     function syncModelButtons(selectedValue) {
-      document.querySelectorAll('.size-btn, .layout-btn').forEach((button) => {
+      document.querySelectorAll('.layout-btn').forEach((button) => {
         const matches = button.getAttribute('data-size') === selectedValue;
         button.classList.toggle('active', matches);
       });
+    }
+
+    function syncWheelbaseButtons() {
+      document.querySelectorAll('.size-btn').forEach((button) => {
+        const matches = button.getAttribute('data-wheelbase') === selectedWheelbase;
+        button.classList.toggle('active', matches);
+      });
+    }
+
+    function parsePriceCsv(csvText) {
+      const rows = csvText.split(/\r?\n/).filter(Boolean);
+      const parsed = {};
+
+      for (const row of rows.slice(1)) {
+        const values = row.split(',').map((value) => value.replace(/^\uFEFF/, '').trim());
+        const [layout, cushion, wheelbase, colour, price] = values;
+
+        if (!layout || !cushion || !wheelbase || !colour || price === undefined) {
+          continue;
+        }
+
+        if (!parsed[layout]) parsed[layout] = {};
+        if (!parsed[layout][cushion]) parsed[layout][cushion] = {};
+        if (!parsed[layout][cushion][wheelbase]) parsed[layout][cushion][wheelbase] = {};
+
+        parsed[layout][cushion][wheelbase][colour] = Number(price);
+      }
+
+      return parsed;
+    }
+
+    async function loadPriceData() {
+      if (priceDataPromise) {
+        return priceDataPromise;
+      }
+
+      priceDataPromise = fetch('Price%20list.csv')
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error('Could not fetch price CSV');
+          }
+          return response.text();
+        })
+        .then((csvText) => parsePriceCsv(csvText))
+        .catch(() => PRICE_FALLBACK);
+
+      return priceDataPromise;
+    }
+
+    function getLayoutNameFromModel(modelFile) {
+      if (modelFile === 'Ewe.glb') return 'Ewe';
+      if (modelFile === 'Belted%20Ewe.glb') return 'Belted Ewe';
+      return 'Twin Bench';
+    }
+
+    function getMaterialName() {
+      return selectedDoor === 'Hexa ply' ? 'Hexa ply' : 'Laminate';
+    }
+
+    async function updatePriceDisplay() {
+      const priceData = await loadPriceData();
+      const layoutName = getLayoutNameFromModel(selectedModel);
+      const cushionName = selectedCushions === 'Cushions' ? 'With Cushions' : 'Without Cushions';
+      const materialName = getMaterialName();
+      const price = priceData[layoutName]?.[cushionName]?.[selectedWheelbase]?.[materialName];
+      const priceElement = document.querySelector('.product-price strong');
+
+      if (!priceElement) return;
+
+      if (typeof price === 'number') {
+        priceElement.textContent = `£${price.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      } else {
+        priceElement.textContent = '£0.00';
+      }
     }
 
     function getActiveModelFile() {
@@ -611,6 +722,7 @@
       const targetFileUrl = getActiveModelFile();
       const currentSrcAttr = modelViewer.getAttribute('src');
       syncModelButtons(selectedModel);
+      syncWheelbaseButtons();
 
       if (currentSrcAttr !== targetFileUrl) {
         showSpinnerMessage('Loading model…');
@@ -631,7 +743,7 @@
       }
     }
 
-    document.querySelectorAll('.size-btn, .layout-btn').forEach((button) => {
+    document.querySelectorAll('.layout-btn').forEach((button) => {
       button.addEventListener('click', (e) => {
         const nextModel = e.target.getAttribute('data-size');
         selectedModel = nextModel;
@@ -644,6 +756,17 @@
         }
 
         updateConfigurator();
+        updatePriceDisplay();
+      });
+    });
+
+    document.querySelectorAll('.size-btn').forEach((button) => {
+      button.addEventListener('click', (e) => {
+        const nextWheelbase = e.target.getAttribute('data-wheelbase');
+        if (!nextWheelbase) return;
+        selectedWheelbase = nextWheelbase;
+        syncWheelbaseButtons();
+        updatePriceDisplay();
       });
     });
 
@@ -653,6 +776,7 @@
         e.target.classList.add('active');
         selectedCushions = e.target.getAttribute('data-cushion');
         updateConfigurator();
+        updatePriceDisplay();
       });
     });
 
@@ -662,6 +786,7 @@
         e.target.classList.add('active');
         selectedDoor = e.target.getAttribute('data-door');
         updateConfigurator();
+        updatePriceDisplay();
       });
     });
 
@@ -681,6 +806,8 @@
     });
 
     updateConfigurator();
+    syncWheelbaseButtons();
+    updatePriceDisplay();
 
     const WIX_FORM_URLS = {
       'Ewe.glb': 'https://blacksheepcampers.wixforms.com/f/7516869375056413788',
