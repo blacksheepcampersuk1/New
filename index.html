@@ -498,6 +498,11 @@
     let selectedCushions = 'Without%20Cushions';
     let selectedDoor = 'Green';
     let selectedWheelbase = 'LWB';
+    const wheelbaseByModel = {
+      'Twin%20Bench.glb': 'LWB',
+      'Ewe.glb': 'LWB',
+      'Belted%20Ewe.glb': 'LWB'
+    };
 
     const PRICE_FALLBACK = {
       'Twin Bench': {
@@ -549,6 +554,11 @@
         const matches = button.getAttribute('data-wheelbase') === selectedWheelbase;
         button.classList.toggle('active', matches);
       });
+    }
+
+    function setWheelbaseForCurrentModel() {
+      selectedWheelbase = wheelbaseByModel[selectedModel] || 'LWB';
+      syncWheelbaseButtons();
     }
 
     function parsePriceCsv(csvText) {
@@ -722,7 +732,7 @@
       const targetFileUrl = getActiveModelFile();
       const currentSrcAttr = modelViewer.getAttribute('src');
       syncModelButtons(selectedModel);
-      syncWheelbaseButtons();
+      setWheelbaseForCurrentModel();
 
       if (currentSrcAttr !== targetFileUrl) {
         showSpinnerMessage('Loading model…');
@@ -748,6 +758,7 @@
         const nextModel = e.target.getAttribute('data-size');
         selectedModel = nextModel;
         syncModelButtons(selectedModel);
+        setWheelbaseForCurrentModel();
 
         if (userHasManualView) {
           try { savedOrbitToRestore = modelViewer.cameraOrbit || null; } catch (err) { savedOrbitToRestore = null; }
@@ -765,6 +776,7 @@
         const nextWheelbase = e.target.getAttribute('data-wheelbase');
         if (!nextWheelbase) return;
         selectedWheelbase = nextWheelbase;
+        wheelbaseByModel[selectedModel] = selectedWheelbase;
         syncWheelbaseButtons();
         updatePriceDisplay();
       });
@@ -805,8 +817,8 @@
       } catch (err) {}
     });
 
+    setWheelbaseForCurrentModel();
     updateConfigurator();
-    syncWheelbaseButtons();
     updatePriceDisplay();
 
     const WIX_FORM_URLS = {
