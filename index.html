@@ -145,7 +145,7 @@
       flex-direction: column;
       gap: 18px;
       width: 100%;
-      max-width: 320px;
+      max-width: 360px;
     }
 
     .row {
@@ -280,6 +280,14 @@
       text-align: center;
     }
 
+    .cushion-btn:disabled,
+    .cushion-btn.disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      filter: grayscale(0.2);
+      pointer-events: none;
+    }
+
     .request-btn {
       width: 100%;
       background: #2a3c2d;
@@ -299,13 +307,19 @@
 
     .product-description {
       margin-top: 14px;
-      padding: 12px 14px;
-      border: 1px solid rgba(30, 30, 30, 0.14);
+      padding: 16px 18px;
+      border: 1px solid rgba(30, 30, 30, 0.08);
       border-radius: 6px;
-      background: rgba(255,255,255,0.22);
-      color: #3d3d3d;
+      background: var(--page-bg);
+      color: #222;
       font-size: 13px;
       line-height: 1.6;
+      font-weight: 700;
+      width: 100%;
+      max-width: 420px;
+      margin-left: auto;
+      margin-right: auto;
+      text-align: center;
     }
 
     .view-controls {
@@ -345,6 +359,9 @@
         padding-top: 0;
       }
       .configurator-panel {
+        max-width: 100%;
+      }
+      .product-description {
         max-width: 100%;
       }
     }
@@ -522,6 +539,34 @@
         const matches = button.getAttribute('data-package') === selectedValue;
         button.classList.toggle('active', matches);
       });
+    }
+
+    function syncCushionButtons() {
+      const isFullConversion = selectedPackage === 'Full Conversion';
+      const withoutCushionBtn = document.querySelector('.cushion-btn[data-cushion="Without%20Cushions"]');
+      const withCushionBtn = document.querySelector('.cushion-btn[data-cushion="Cushions"]');
+
+      document.querySelectorAll('.cushion-btn').forEach((button) => {
+        const isWithout = button.getAttribute('data-cushion') === 'Without%20Cushions';
+        const shouldDisable = isFullConversion && isWithout;
+        button.disabled = shouldDisable;
+        button.classList.toggle('disabled', shouldDisable);
+        if (shouldDisable) {
+          button.classList.remove('active');
+        }
+      });
+
+      if (isFullConversion) {
+        selectedCushions = 'Cushions';
+        withCushionBtn?.classList.add('active');
+      } else {
+        const shouldBeActive = selectedCushions === 'Cushions' ? withCushionBtn : document.querySelector('.cushion-btn[data-cushion="Without%20Cushions"]');
+        if (shouldBeActive) shouldBeActive.classList.add('active');
+      }
+
+      if (withoutCushionBtn) {
+        withoutCushionBtn.classList.toggle('active', selectedCushions === 'Without%20Cushions' && !isFullConversion);
+      }
     }
 
     function syncWheelbaseButtons() {
@@ -794,6 +839,7 @@
       const targetFileUrl = getActiveModelFile();
       const currentSrcAttr = modelViewer.getAttribute('src');
       syncModelButtons(selectedModel);
+      syncCushionButtons();
       setWheelbaseForCurrentModel();
 
       if (currentSrcAttr !== targetFileUrl) {
@@ -820,10 +866,14 @@
         const nextPackage = e.target.getAttribute('data-package');
         if (!nextPackage) return;
         selectedPackage = nextPackage;
+        if (selectedPackage === 'Full Conversion') {
+          selectedCushions = 'Cushions';
+        }
         syncPackageButtons(selectedPackage);
         updateProductTitle();
         updatePriceDisplay();
         updateDescription();
+        updateConfigurator();
       });
     });
 
@@ -861,9 +911,14 @@
 
     document.querySelectorAll('.cushion-btn').forEach((button) => {
       button.addEventListener('click', (e) => {
+        const cushionValue = e.target.getAttribute('data-cushion');
+        if (!cushionValue) return;
+        if (selectedPackage === 'Full Conversion' && cushionValue === 'Without%20Cushions') {
+          return;
+        }
         document.querySelectorAll('.cushion-btn').forEach((btn) => btn.classList.remove('active'));
         e.target.classList.add('active');
-        selectedCushions = e.target.getAttribute('data-cushion');
+        selectedCushions = cushionValue;
         updateConfigurator();
         updatePriceDisplay();
         updateDescription();
@@ -914,6 +969,7 @@
 
     setWheelbaseForCurrentModel();
     syncPackageButtons(selectedPackage);
+    syncCushionButtons();
     updateConfigurator();
     updateProductTitle();
     updatePriceDisplay();
