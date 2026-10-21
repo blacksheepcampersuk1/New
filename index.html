@@ -303,55 +303,6 @@
       background: #1f2d22;
     }
 
-    .info-stack {
-      margin-top: 22px;
-      border-top: 1px solid rgba(0,0,0,0.22);
-      padding-top: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .info-item {
-      border-top: 1px solid rgba(0,0,0,0.18);
-      padding-top: 12px;
-      font-weight: 700;
-      color: #1d1d1d;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 15px;
-    }
-
-    .info-item:first-child {
-      border-top: none;
-      padding-top: 0;
-    }
-
-    .info-item .plus {
-      font-size: 18px;
-      line-height: 1;
-      font-weight: 700;
-      opacity: 0.9;
-    }
-
-    .social-row {
-      display: flex;
-      gap: 16px;
-      align-items: center;
-      justify-content: center;
-      padding-top: 20px;
-      margin-top: 8px;
-    }
-
-    .social-row .icon-btn {
-      background: transparent;
-      border: 1px solid rgba(0,0,0,0.25);
-      width: 32px;
-      height: 32px;
-      font-size: 12px;
-    }
-
     .view-controls {
       position: absolute;
       top: 12px;
@@ -484,6 +435,7 @@
     let selectedModel = 'Twin%20Bench.glb';
     let selectedCushions = 'Without%20Cushions';
     let selectedDoor = 'Green';
+    let selectedMaterial = 'Laminate';
     let selectedWheelbase = 'LWB';
     const wheelbaseByModel = {
       'Twin%20Bench.glb': 'LWB',
@@ -595,7 +547,7 @@
     }
 
     function getMaterialName() {
-      return selectedDoor === 'Hexa ply' ? 'Hexa ply' : 'Laminate';
+      return selectedMaterial;
     }
 
     async function updatePriceDisplay() {
@@ -644,7 +596,8 @@
     }
 
     function applyVariant(name) {
-      const variantName = getModelVariantName(name || selectedDoor);
+      const variantBase = selectedMaterial === 'Hexa ply' ? 'Black' : (name || selectedDoor);
+      const variantName = getModelVariantName(variantBase);
       try {
         if (typeof modelViewer.variantName !== 'undefined') {
           modelViewer.variantName = variantName;
@@ -781,9 +734,25 @@
 
     document.querySelectorAll('.door-btn').forEach((button) => {
       button.addEventListener('click', (e) => {
-        document.querySelectorAll('.door-btn').forEach((btn) => btn.classList.remove('active'));
-        e.target.classList.add('active');
-        selectedDoor = e.target.getAttribute('data-door');
+        const clickedDoor = e.target.getAttribute('data-door');
+
+        document.querySelectorAll('.door-btn').forEach((btn) => {
+          const isHexaSelected = clickedDoor === 'Hexa ply';
+          const btnDoor = btn.getAttribute('data-door');
+          btn.classList.toggle(
+            'active',
+            (isHexaSelected && btnDoor === 'Hexa ply') || (!isHexaSelected && btnDoor === clickedDoor)
+          );
+        });
+
+        if (clickedDoor === 'Hexa ply') {
+          selectedDoor = 'Black';
+          selectedMaterial = 'Hexa ply';
+        } else {
+          selectedDoor = clickedDoor;
+          selectedMaterial = 'Laminate';
+        }
+
         updateConfigurator();
         updatePriceDisplay();
       });
