@@ -198,12 +198,14 @@
     .size-btn,
     .door-btn,
     .cushion-btn,
-    .layout-btn {
+    .layout-btn,
+    .package-btn {
       min-width: 56px;
       padding: 10px 11px;
     }
 
-    .layout-btn {
+    .layout-btn,
+    .package-btn {
       min-width: 0;
       flex: 1;
       text-align: center;
@@ -295,6 +297,17 @@
       background: #1f2d22;
     }
 
+    .product-description {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border: 1px solid rgba(30, 30, 30, 0.14);
+      border-radius: 6px;
+      background: rgba(255,255,255,0.22);
+      color: #3d3d3d;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
     .view-controls {
       position: absolute;
       top: 12px;
@@ -367,6 +380,14 @@
 
           <div class="configurator-panel">
             <div class="row">
+              <span class="row-title">Package</span>
+              <div class="btn-group">
+                <button class="package-btn active" type="button" data-package="Furniture Only">Furniture Only</button>
+                <button class="package-btn" type="button" data-package="Full Conversion">Full Conversion</button>
+              </div>
+            </div>
+
+            <div class="row">
               <span class="row-title">Layout</span>
               <div class="btn-group">
                 <button class="layout-btn active" type="button" data-size="Twin%20Bench.glb">Twin Bench</button>
@@ -403,6 +424,7 @@
             </div>
 
             <button id="request-quote-btn" class="request-btn" type="button">Enquire now</button>
+            <div id="product-description" class="product-description" aria-live="polite"></div>
           </div>
         </aside>
       </div>
@@ -412,7 +434,7 @@
   <div id="form-modal" role="dialog" aria-modal="true" style="position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.6); z-index:9999;">
     <div id="form-modal-card" style="width:92%; max-width:960px; height:86%; background:#fff; border-radius:10px; overflow:hidden; position:relative; box-shadow:0 20px 40px rgba(0,0,0,0.4);">
       <button id="form-modal-close" aria-label="Close form" style="position:absolute; right:12px; top:12px; z-index:5; padding:8px 10px; border-radius:6px; border:1px solid #ddd; background:#fff; cursor:pointer;">Close</button>
-      <div id="form-modal-spinner" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7)); z-index:4; font-weight:700; color:#1f1f1f;">Loading form…</div>
+      <div id="form-modal-spinner" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7)); font-size:18px; font-weight:700; color:#222;">Loading form…</div>
       <iframe id="form-modal-iframe" src="" frameborder="0" title="Quote form" style="width:100%; height:100%; border:0; display:block;"></iframe>
     </div>
   </div>
@@ -423,6 +445,7 @@
     const viewControls = document.querySelector('#view-controls');
 
     let selectedModel = 'Twin%20Bench.glb';
+    let selectedPackage = 'Furniture Only';
     let selectedCushions = 'Without%20Cushions';
     let selectedDoor = 'Green';
     let selectedMaterial = 'Laminate';
@@ -434,17 +457,33 @@
     };
 
     const PRICE_FALLBACK = {
-      'Twin Bench': {
-        'With Cushions': { SWB: { Laminate: 2750, 'Hexa ply': 2550 }, LWB: { Laminate: 3020, 'Hexa ply': 2820 } },
-        'Without Cushions': { SWB: { Laminate: 2095, 'Hexa ply': 1895 }, LWB: { Laminate: 2295, 'Hexa ply': 2095 } }
+      'Furniture Only': {
+        'Twin Bench': {
+          'With Cushions': { SWB: { Laminate: 2750, 'Hexa ply': 2550 }, LWB: { Laminate: 3020, 'Hexa ply': 2820 } },
+          'Without Cushions': { SWB: { Laminate: 2095, 'Hexa ply': 1895 }, LWB: { Laminate: 2295, 'Hexa ply': 2095 } }
+        },
+        Ewe: {
+          'With Cushions': { SWB: { Laminate: 2250, 'Hexa ply': 2050 }, LWB: { Laminate: 2520, 'Hexa ply': 2320 } },
+          'Without Cushions': { SWB: { Laminate: 1595, 'Hexa ply': 1395 }, LWB: { Laminate: 1795, 'Hexa ply': 1595 } }
+        },
+        'Belted Ewe': {
+          'With Cushions': { SWB: { Laminate: 0, 'Hexa ply': 0 }, LWB: { Laminate: 0, 'Hexa ply': 0 } },
+          'Without Cushions': { SWB: { Laminate: 0, 'Hexa ply': 0 }, LWB: { Laminate: 0, 'Hexa ply': 0 } }
+        }
       },
-      Ewe: {
-        'With Cushions': { SWB: { Laminate: 2250, 'Hexa ply': 2050 }, LWB: { Laminate: 2520, 'Hexa ply': 2320 } },
-        'Without Cushions': { SWB: { Laminate: 1595, 'Hexa ply': 1395 }, LWB: { Laminate: 1795, 'Hexa ply': 1595 } }
-      },
-      'Belted Ewe': {
-        'With Cushions': { SWB: { Laminate: 0, 'Hexa ply': 0 }, LWB: { Laminate: 0, 'Hexa ply': 0 } },
-        'Without Cushions': { SWB: { Laminate: 0, 'Hexa ply': 0 }, LWB: { Laminate: 0, 'Hexa ply': 0 } }
+      'Full Conversion': {
+        'Twin Bench': {
+          'With Cushions': { SWB: { Laminate: 11200, 'Hexa ply': 11000 }, LWB: { Laminate: 11500, 'Hexa ply': 11300 } },
+          'Without Cushions': { SWB: { Laminate: 0, 'Hexa ply': 0 }, LWB: { Laminate: 0, 'Hexa ply': 0 } }
+        },
+        Ewe: {
+          'With Cushions': { SWB: { Laminate: 10700, 'Hexa ply': 10500 }, LWB: { Laminate: 11000, 'Hexa ply': 10800 } },
+          'Without Cushions': { SWB: { Laminate: 0, 'Hexa ply': 0 }, LWB: { Laminate: 0, 'Hexa ply': 0 } }
+        },
+        'Belted Ewe': {
+          'With Cushions': { SWB: { Laminate: 11950, 'Hexa ply': 11750 }, LWB: { Laminate: 12250, 'Hexa ply': 12050 } },
+          'Without Cushions': { SWB: { Laminate: 0, 'Hexa ply': 0 }, LWB: { Laminate: 0, 'Hexa ply': 0 } }
+        }
       }
     };
 
@@ -478,6 +517,13 @@
       });
     }
 
+    function syncPackageButtons(selectedValue) {
+      document.querySelectorAll('.package-btn').forEach((button) => {
+        const matches = button.getAttribute('data-package') === selectedValue;
+        button.classList.toggle('active', matches);
+      });
+    }
+
     function syncWheelbaseButtons() {
       document.querySelectorAll('.size-btn').forEach((button) => {
         const matches = button.getAttribute('data-wheelbase') === selectedWheelbase;
@@ -490,23 +536,68 @@
       syncWheelbaseButtons();
     }
 
+    function parseCsvRow(row) {
+      const values = [];
+      let current = '';
+      let inQuotes = false;
+
+      for (let i = 0; i < row.length; i += 1) {
+        const char = row[i];
+
+        if (char === '"') {
+          if (inQuotes && row[i + 1] === '"') {
+            current += '"';
+            i += 1;
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (char === ',' && !inQuotes) {
+          values.push(current);
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+
+      values.push(current);
+      return values.map((value) => value.replace(/^\uFEFF/, '').trim());
+    }
+
     function parsePriceCsv(csvText) {
-      const rows = csvText.split(/\r?\n/).filter(Boolean);
+      const rows = csvText.split(/\r?\n/).filter((line) => line.trim() !== '');
       const parsed = {};
 
-      for (const row of rows.slice(1)) {
-        const values = row.split(',').map((value) => value.replace(/^\uFEFF/, '').trim());
-        const [layout, cushion, wheelbase, colour, price] = values;
+      for (const row of rows) {
+        const values = parseCsvRow(row);
 
-        if (!layout || !cushion || !wheelbase || !colour || price === undefined) {
+        if (!values.length || values.every((value) => !value)) {
           continue;
         }
 
-        if (!parsed[layout]) parsed[layout] = {};
-        if (!parsed[layout][cushion]) parsed[layout][cushion] = {};
-        if (!parsed[layout][cushion][wheelbase]) parsed[layout][cushion][wheelbase] = {};
+        if (values[0].toLowerCase() === 'package') {
+          continue;
+        }
 
-        parsed[layout][cushion][wheelbase][colour] = Number(price);
+        const [packageName, layout, cushion, wheelbase, colour, price, ...descriptionParts] = values;
+
+        if (!packageName || !layout || !cushion || !wheelbase || !colour || price === undefined) {
+          continue;
+        }
+
+        const description = descriptionParts
+          .map((part) => part.trim())
+          .filter((part) => part)
+          .join(', ');
+
+        if (!parsed[packageName]) parsed[packageName] = {};
+        if (!parsed[packageName][layout]) parsed[packageName][layout] = {};
+        if (!parsed[packageName][layout][cushion]) parsed[packageName][layout][cushion] = {};
+        if (!parsed[packageName][layout][cushion][wheelbase]) parsed[packageName][layout][cushion][wheelbase] = {};
+
+        parsed[packageName][layout][cushion][wheelbase][colour] = {
+          price: Number(price),
+          description
+        };
       }
 
       return parsed;
@@ -540,20 +631,61 @@
       return selectedMaterial;
     }
 
-    async function updatePriceDisplay() {
-      const priceData = await loadPriceData();
+    function getCurrentVariantInfo(priceData) {
       const layoutName = getLayoutNameFromModel(selectedModel);
       const cushionName = selectedCushions === 'Cushions' ? 'With Cushions' : 'Without Cushions';
       const materialName = getMaterialName();
-      const price = priceData[layoutName]?.[cushionName]?.[selectedWheelbase]?.[materialName];
+      const packageData = priceData[selectedPackage] || {};
+      const variant = packageData[layoutName]?.[cushionName]?.[selectedWheelbase]?.[materialName];
+
+      if (typeof variant === 'number') {
+        return { price: variant, description: '' };
+      }
+
+      if (variant && typeof variant === 'object') {
+        return {
+          price: variant.price,
+          description: variant.description || ''
+        };
+      }
+
+      return { price: undefined, description: '' };
+    }
+
+    function updateProductTitle() {
+      const titleElement = document.querySelector('.product-title');
+      if (!titleElement) return;
+
+      const layoutName = getLayoutNameFromModel(selectedModel);
+      const friendlyLayout = layoutName === 'Twin Bench' ? 'The twin bench' : layoutName === 'Belted Ewe' ? 'The belted ewe' : 'The ewe shape';
+      titleElement.innerHTML = `${friendlyLayout} -<br>${selectedPackage.toLowerCase()}`;
+    }
+
+    async function updatePriceDisplay() {
+      const priceData = await loadPriceData();
+      const variant = getCurrentVariantInfo(priceData);
       const priceElement = document.querySelector('.product-price strong');
 
       if (!priceElement) return;
 
-      if (typeof price === 'number') {
-        priceElement.textContent = `£${price.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      if (typeof variant.price === 'number') {
+        priceElement.textContent = `£${variant.price.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
       } else {
         priceElement.textContent = '£0.00';
+      }
+    }
+
+    async function updateDescription() {
+      const priceData = await loadPriceData();
+      const descriptionElement = document.getElementById('product-description');
+
+      if (!descriptionElement) return;
+
+      const variant = getCurrentVariantInfo(priceData);
+      if (variant.description) {
+        descriptionElement.textContent = variant.description;
+      } else {
+        descriptionElement.textContent = 'Select your package, layout and finish to see the product description.';
       }
     }
 
@@ -683,6 +815,18 @@
       }
     }
 
+    document.querySelectorAll('.package-btn').forEach((button) => {
+      button.addEventListener('click', (e) => {
+        const nextPackage = e.target.getAttribute('data-package');
+        if (!nextPackage) return;
+        selectedPackage = nextPackage;
+        syncPackageButtons(selectedPackage);
+        updateProductTitle();
+        updatePriceDisplay();
+        updateDescription();
+      });
+    });
+
     document.querySelectorAll('.layout-btn').forEach((button) => {
       button.addEventListener('click', (e) => {
         const nextModel = e.target.getAttribute('data-size');
@@ -697,7 +841,9 @@
         }
 
         updateConfigurator();
+        updateProductTitle();
         updatePriceDisplay();
+        updateDescription();
       });
     });
 
@@ -709,6 +855,7 @@
         wheelbaseByModel[selectedModel] = selectedWheelbase;
         syncWheelbaseButtons();
         updatePriceDisplay();
+        updateDescription();
       });
     });
 
@@ -719,6 +866,7 @@
         selectedCushions = e.target.getAttribute('data-cushion');
         updateConfigurator();
         updatePriceDisplay();
+        updateDescription();
       });
     });
 
@@ -745,6 +893,7 @@
 
         updateConfigurator();
         updatePriceDisplay();
+        updateDescription();
       });
     });
 
@@ -764,8 +913,11 @@
     });
 
     setWheelbaseForCurrentModel();
+    syncPackageButtons(selectedPackage);
     updateConfigurator();
+    updateProductTitle();
     updatePriceDisplay();
+    updateDescription();
 
     const WIX_FORM_URLS = {
       'Ewe.glb': 'https://blacksheepcampers.wixforms.com/f/7516869375056413788',
