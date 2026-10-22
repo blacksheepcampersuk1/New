@@ -748,9 +748,14 @@
 
     function getModelVariantName(variantName) {
       const activeModel = getActiveModelFile();
-      if (activeModel && CUSHION_VARIANT_SWAP_MODELS.has(activeModel) && (variantName === 'Black' || variantName === 'Blue')) {
+      const isCushionSwapModel =
+        activeModel === 'Twin%20Bench%20Cushion.glb' ||
+        activeModel === 'Belted%20Ewe%20Cushion.glb';
+
+      if (isCushionSwapModel && (variantName === 'Black' || variantName === 'Blue')) {
         return variantName === 'Black' ? 'Blue' : 'Black';
       }
+
       return variantName;
     }
 
