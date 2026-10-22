@@ -451,7 +451,7 @@
   <div id="form-modal" role="dialog" aria-modal="true" style="position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.6); z-index:9999;">
     <div id="form-modal-card" style="width:92%; max-width:960px; height:86%; background:#fff; border-radius:10px; overflow:hidden; position:relative; box-shadow:0 20px 40px rgba(0,0,0,0.4);">
       <button id="form-modal-close" aria-label="Close form" style="position:absolute; right:12px; top:12px; z-index:5; padding:8px 10px; border-radius:6px; border:1px solid #ddd; background:#fff; cursor:pointer;">Close</button>
-      <div id="form-modal-spinner" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7)); font-weight:700;">Loading form…</div>
+      <div id="form-modal-spinner" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.75)); font-weight:700;">Loading form…</div>
       <iframe id="form-modal-iframe" src="" frameborder="0" title="Quote form" style="width:100%; height:100%; border:0; display:block;"></iframe>
     </div>
   </div>
@@ -520,8 +520,7 @@
     };
 
     const CUSHION_VARIANT_SWAP_MODELS = new Set([
-      'Twin%20Bench%20Cushion.glb',
-      'Belted%20Ewe%20Cushion.glb'
+      'Twin%20Bench%20Cushion.glb'
     ]);
 
     const ROTATION_STEP = 45;
@@ -748,9 +747,7 @@
 
     function getModelVariantName(variantName) {
       const activeModel = getActiveModelFile();
-      const isCushionSwapModel =
-        activeModel === 'Twin%20Bench%20Cushion.glb' ||
-        activeModel === 'Belted%20Ewe%20Cushion.glb';
+      const isCushionSwapModel = CUSHION_VARIANT_SWAP_MODELS.has(activeModel);
 
       if (isCushionSwapModel && (variantName === 'Black' || variantName === 'Blue')) {
         return variantName === 'Black' ? 'Blue' : 'Black';
@@ -997,41 +994,28 @@
     const modalClose = document.getElementById('form-modal-close');
 
     async function openFormOverlay(url) {
+      modalSpinner.style.display = 'flex';
+      modalIframe.src = url;
+      modal.style.display = 'flex';
+      modalIframe.onload = () => {
+        modalSpinner.style.display = 'none';
+      };
+    }
+
+    function closeFormOverlay() {
+      modal.style.display = 'none';
       modalIframe.src = '';
       modalSpinner.style.display = 'flex';
-      modal.style.display = 'flex';
-
-      let didLoad = false;
-      const loadPromise = new Promise((resolve) => {
-        modalIframe.onload = () => {
-          didLoad = true;
-          modalSpinner.style.display = 'none';
-          resolve(true);
-        };
-      });
-
-      modalIframe.src = url;
-      await loadPromise;
-      if (!didLoad) {
-        modalSpinner.style.display = 'none';
-      }
     }
+
+    modalClose.addEventListener('click', closeFormOverlay);
+    modal.addEventListener('click', (event) => {
+      if (event.target === modal) closeFormOverlay();
+    });
 
     document.getElementById('request-quote-btn').addEventListener('click', () => {
       const url = WIX_FORM_URLS[selectedModel] || WIX_FORM_URLS['Twin%20Bench.glb'];
       openFormOverlay(url);
-    });
-
-    modalClose.addEventListener('click', () => {
-      modal.style.display = 'none';
-      modalIframe.src = '';
-    });
-
-    modal.addEventListener('click', (event) => {
-      if (event.target === modal) {
-        modal.style.display = 'none';
-        modalIframe.src = '';
-      }
     });
   </script>
 </body>
