@@ -306,7 +306,7 @@
     }
 
     .product-description {
-      margin-top: 14px;
+      margin-top: 0;
       padding: 16px 18px;
       border: 1px solid rgba(30, 30, 30, 0.08);
       border-radius: 6px;
@@ -316,10 +316,8 @@
       line-height: 1.6;
       font-weight: 700;
       width: 100%;
-      max-width: 420px;
-      margin-left: auto;
-      margin-right: auto;
-      text-align: center;
+      max-width: 100%;
+      text-align: left;
     }
 
     .view-controls {
@@ -389,6 +387,8 @@
 
             <div id="viewer-spinner" class="viewer-overlay">Loading model…</div>
           </div>
+
+          <div id="product-description" class="product-description" aria-live="polite"></div>
         </section>
 
         <aside class="product-info" aria-label="Product configuration panel">
@@ -441,7 +441,6 @@
             </div>
 
             <button id="request-quote-btn" class="request-btn" type="button">Enquire now</button>
-            <div id="product-description" class="product-description" aria-live="polite"></div>
           </div>
         </aside>
       </div>
@@ -653,15 +652,11 @@
     }
 
     async function loadPriceData() {
-      if (priceDataPromise) {
-        return priceDataPromise;
-      }
+      if (priceDataPromise) return priceDataPromise;
 
       priceDataPromise = fetch('Price%20list.csv')
         .then((response) => {
-          if (!response.ok) {
-            throw new Error('Could not fetch price CSV');
-          }
+          if (!response.ok) throw new Error('Could not fetch price CSV');
           return response.text();
         })
         .then((csvText) => parsePriceCsv(csvText))
