@@ -305,7 +305,8 @@
       background: #1f2d22;
     }
 
-    .product-description {
+    .product-description,
+    .core-features {
       margin-top: 0;
       padding: 16px 18px;
       border: 1px solid rgba(30, 30, 30, 0.08);
@@ -318,6 +319,33 @@
       width: 100%;
       max-width: 100%;
       text-align: left;
+    }
+
+    .core-features {
+      display: none;
+      margin-top: 12px;
+    }
+
+    .core-features[hidden] {
+      display: none !important;
+    }
+
+    .core-features-title {
+      margin: 0 0 10px;
+      font-weight: 800;
+      font-size: 14px;
+      color: #1b1b1b;
+    }
+
+    .core-features-list {
+      margin: 0;
+      padding-left: 18px;
+      font-weight: 600;
+      line-height: 1.7;
+    }
+
+    .core-features-list li {
+      margin-bottom: 4px;
     }
 
     .view-controls {
@@ -359,7 +387,8 @@
       .configurator-panel {
         max-width: 100%;
       }
-      .product-description {
+      .product-description,
+      .core-features {
         max-width: 100%;
       }
     }
@@ -389,6 +418,7 @@
           </div>
 
           <div id="product-description" class="product-description" aria-live="polite"></div>
+          <div id="core-features" class="core-features" hidden aria-live="polite"></div>
         </section>
 
         <aside class="product-info" aria-label="Product configuration panel">
@@ -449,8 +479,8 @@
 
   <div id="form-modal" role="dialog" aria-modal="true" style="position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.6); z-index:9999;">
     <div id="form-modal-card" style="width:92%; max-width:960px; height:86%; background:#fff; border-radius:10px; overflow:hidden; position:relative; box-shadow:0 20px 40px rgba(0,0,0,0.4);">
-      <button id="form-modal-close" aria-label="Close form" style="position:absolute; right:12px; top:12px; z-index:5; padding:8px 10px; border-radius:6px; border:1px solid #ddd; background:#fff; cursor:pointer;">Close</button>
-      <div id="form-modal-spinner" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.75)); font-weight:700;">Loading form…</div>
+      <button id="form-modal-close" aria-label="Close form" style="position:absolute; right:12px; top:12px; z-index:5; padding:8px 10px; border-radius:6px; border:1px solid #ddd; background:#fff; cursor:pointer; font-weight:700;">Close</button>
+      <div id="form-modal-spinner" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.96)); z-index:4;">Loading quote form…</div>
       <iframe id="form-modal-iframe" src="" frameborder="0" title="Quote form" style="width:100%; height:100%; border:0; display:block;"></iframe>
     </div>
   </div>
@@ -733,6 +763,38 @@
       }
     }
 
+    function updateCoreFeaturesVisibility() {
+      const coreFeaturesBox = document.getElementById('core-features');
+      if (!coreFeaturesBox) return;
+
+      if (selectedPackage === 'Full Conversion') {
+        coreFeaturesBox.innerHTML = `
+          <div class="core-features-title">Core Features:</div>
+          <ul class="core-features-list">
+            <li>Van preparation - This includes removing the bulkhead, taking out any pre-existing furniture, or cleaning the van, ready to be converted.</li>
+            <li>Sound deadening &amp; Insulation</li>
+            <li>Plywood lining</li>
+            <li>Carpet lining</li>
+            <li>Drivers side sliding window &amp; passenger side fixed window</li>
+            <li>Plywood and heavy duty vinyl flooring</li>
+            <li>Slatted wooden ceiling with LED strip lights</li>
+            <li>A compact but functional kitchen, with an oak worktop, a 50L fridge/freezer, and a range of induction hob and sink options</li>
+            <li>A u-shape seating area that folds out into a large bed, big enough for two. With plenty of storage, and even a designated area to have your own portable toilet.</li>
+            <li>A diesel heater</li>
+            <li>Cushions with your choice of fabric</li>
+            <li>A charging system to keep you batteries charged up, whether that is utilising your vans alternator via DC-DC charging, solar panels, shore power via a hook-up point, or all of the above to power your van</li>
+            <li>An electrical system to suit your needs, including 12V charging points, ceiling lights, reading lights and 240V plug sockets.</li>
+          </ul>
+        `;
+        coreFeaturesBox.hidden = false;
+        coreFeaturesBox.style.display = 'block';
+      } else {
+        coreFeaturesBox.hidden = true;
+        coreFeaturesBox.style.display = 'none';
+        coreFeaturesBox.innerHTML = '';
+      }
+    }
+
     function getActiveModelFile() {
       if (selectedCushions === 'Cushions') {
         return MODEL_CUSHION_FILES[selectedModel] || selectedModel;
@@ -875,6 +937,7 @@
         updateProductTitle();
         updatePriceDisplay();
         updateDescription();
+        updateCoreFeaturesVisibility();
         updateConfigurator();
       });
     });
@@ -976,6 +1039,7 @@
     updateProductTitle();
     updatePriceDisplay();
     updateDescription();
+    updateCoreFeaturesVisibility();
 
     const WIX_FORM_URLS = {
       'Ewe.glb': 'https://blacksheepcampers.wixforms.com/f/7516869375056413788',
