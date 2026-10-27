@@ -484,7 +484,7 @@
       <button id="form-modal-close" aria-label="Close form" style="position:absolute; right:12px; top:12px; z-index:5; padding:8px 10px; border-radius:6px; border:1px solid #ddd; background:#fff;">
         ✕
       </button>
-      <div id="form-modal-spinner" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.95)); z-index:2;">
+      <div id="form-modal-spinner" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.94)); font-size:18px; font-weight:600; color:#222;">
         Loading…
       </div>
       <iframe id="form-modal-iframe" src="" frameborder="0" title="Quote form" style="width:100%; height:100%; border:0; display:block;"></iframe>
@@ -507,6 +507,47 @@
       'Ewe.glb': 'LWB',
       'Belted%20Ewe.glb': 'LWB'
     };
+
+    function normalizeModelKey(fileName) {
+      if (!fileName) return fileName;
+      return String(fileName).trim();
+    }
+
+    function modelUrl(fileName) {
+      if (!fileName) return fileName;
+      return encodeURI(normalizeModelKey(fileName));
+    }
+
+    const MODEL_DEFAULT_ORBIT = {
+      'Twin%20Bench.glb': '135deg 75deg auto',
+      'Twin%20Bench%20Cushion.glb': '135deg 75deg auto',
+      'Twin Bench.glb': '135deg 75deg auto',
+      'Twin Bench Cushion.glb': '135deg 75deg auto',
+      'Ewe.glb': '315deg 75deg auto',
+      'Ewe%20Cushion.glb': '315deg 75deg auto',
+      'Ewe Cushion.glb': '315deg 75deg auto',
+      'Belted%20Ewe.glb': '315deg 75deg auto',
+      'Belted%20Ewe%20Cushion.glb': '315deg 75deg auto',
+      'Belted Ewe.glb': '315deg 75deg auto',
+      'Belted Ewe Cushion.glb': '315deg 75deg auto'
+    };
+
+    const MODEL_CUSHION_FILES = {
+      'Twin%20Bench.glb': 'Twin%20Bench%20Cushion.glb',
+      'Twin Bench.glb': 'Twin%20Bench%20Cushion.glb',
+      'Ewe.glb': 'Ewe%20Cushion.glb',
+      'Ewe%20Cushion.glb': 'Ewe%20Cushion.glb',
+      'Ewe Cushion.glb': 'Ewe%20Cushion.glb',
+      'Belted%20Ewe.glb': 'Belted%20Ewe%20Cushion.glb',
+      'Belted Ewe.glb': 'Belted%20Ewe%20Cushion.glb',
+      'Belted%20Ewe%20Cushion.glb': 'Belted%20Ewe%20Cushion.glb',
+      'Belted Ewe Cushion.glb': 'Belted%20Ewe%20Cushion.glb'
+    };
+
+    const CUSHION_VARIANT_SWAP_MODELS = new Set([
+      'Twin%20Bench%20Cushion.glb',
+      'Twin Bench Cushion.glb'
+    ]);
 
     const PRICE_FALLBACK = {
       'Furniture Only': {
@@ -538,25 +579,6 @@
         }
       }
     };
-
-    const MODEL_DEFAULT_ORBIT = {
-      'Twin%20Bench.glb': '135deg 75deg auto',
-      'Twin%20Bench%20Cushion.glb': '135deg 75deg auto',
-      'Ewe.glb': '315deg 75deg auto',
-      'Ewe%20Cushion.glb': '315deg 75deg auto',
-      'Belted%20Ewe.glb': '315deg 75deg auto',
-      'Belted%20Ewe%20Cushion.glb': '315deg 75deg auto'
-    };
-
-    const MODEL_CUSHION_FILES = {
-      'Twin%20Bench.glb': 'Twin%20Bench%20Cushion.glb',
-      'Ewe.glb': 'Ewe%20Cushion.glb',
-      'Belted%20Ewe.glb': 'Belted%20Ewe%20Cushion.glb'
-    };
-
-    const CUSHION_VARIANT_SWAP_MODELS = new Set([
-      'Twin%20Bench%20Cushion.glb'
-    ]);
 
     const ROTATION_STEP = 45;
     const DEFAULT_ORBIT = MODEL_DEFAULT_ORBIT[selectedModel];
@@ -702,8 +724,9 @@
     }
 
     function getLayoutNameFromModel(modelFile) {
-      if (modelFile === 'Ewe.glb') return 'Ewe';
-      if (modelFile === 'Belted%20Ewe.glb') return 'Belted Ewe';
+      const normalizedFile = decodeURIComponent(modelFile || '');
+      if (normalizedFile === 'Ewe.glb') return 'Ewe';
+      if (normalizedFile === 'Belted Ewe.glb') return 'Belted Ewe';
       return 'Twin Bench';
     }
 
@@ -788,7 +811,7 @@
             <li>A u-shape seating area that folds out into a large bed, big enough for two. With plenty of storage, and even a designated area to have your own portable toilet.</li>
             <li>A diesel heater</li>
             <li>Cushions with your choice of fabric</li>
-            <li>A charging system to keep you batteries charged up, whether that is utilising your vans alternator via DC-DC charging, solar panels, shore power via a hook-up point, or all of the possibilities available in a bespoke conversion.</li>
+            <li>A charging system to keep you batteries charged up, whether that is utilising your vans alternator via DC-DC charging, solar panels, shore power via a hook-up point, or all of the above</li>
             <li>An electrical system to suit your needs, including 12V charging points, ceiling lights, reading lights and 240V plug sockets.</li>
           </ul>
         `;
@@ -803,14 +826,14 @@
 
     function getActiveModelFile() {
       if (selectedCushions === 'Cushions') {
-        return MODEL_CUSHION_FILES[selectedModel] || selectedModel;
+        return MODEL_CUSHION_FILES[selectedModel] || modelUrl(selectedModel);
       }
-      return selectedModel;
+      return modelUrl(selectedModel);
     }
 
     function getModelVariantName(variantName) {
       const activeModel = getActiveModelFile();
-      const isCushionSwapModel = CUSHION_VARIANT_SWAP_MODELS.has(activeModel);
+      const isCushionSwapModel = CUSHION_VARIANT_SWAP_MODELS.has(decodeURIComponent(activeModel));
 
       if (isCushionSwapModel && (variantName === 'Black' || variantName === 'Blue')) {
         return variantName === 'Black' ? 'Blue' : 'Black';
@@ -867,12 +890,13 @@
     }
 
     function setModelFile(fileName) {
+      const safeFileName = modelUrl(fileName);
       const orbitToUse = userHasManualView && savedOrbitToRestore
         ? savedOrbitToRestore
-        : (MODEL_DEFAULT_ORBIT[fileName] || DEFAULT_ORBIT || '135deg 75deg auto');
+        : (MODEL_DEFAULT_ORBIT[normalizeModelKey(fileName)] || MODEL_DEFAULT_ORBIT[safeFileName] || DEFAULT_ORBIT || '135deg 75deg auto');
 
       try { modelViewer.cameraOrbit = orbitToUse; } catch (err) {}
-      modelViewer.setAttribute('src', fileName);
+      modelViewer.setAttribute('src', safeFileName);
     }
 
     function refreshVariantAfterLoad() {
@@ -882,7 +906,7 @@
 
     modelViewer.addEventListener('load', () => {
       if (!initialLoadDone) {
-        modelViewer.cameraOrbit = MODEL_DEFAULT_ORBIT[getActiveModelFile()] || DEFAULT_ORBIT;
+        modelViewer.cameraOrbit = MODEL_DEFAULT_ORBIT[normalizeModelKey(getActiveModelFile())] || MODEL_DEFAULT_ORBIT[decodeURIComponent(getActiveModelFile())] || DEFAULT_ORBIT;
         initialLoadDone = true;
       }
       refreshVariantAfterLoad();
@@ -920,7 +944,7 @@
           if (userHasManualView && savedOrbitToRestore) {
             try { modelViewer.cameraOrbit = savedOrbitToRestore; } catch (err) {}
           } else {
-            try { modelViewer.cameraOrbit = MODEL_DEFAULT_ORBIT[targetFileUrl] || DEFAULT_ORBIT; } catch (err) {}
+            try { modelViewer.cameraOrbit = MODEL_DEFAULT_ORBIT[normalizeModelKey(targetFileUrl)] || MODEL_DEFAULT_ORBIT[decodeURIComponent(targetFileUrl)] || DEFAULT_ORBIT; } catch (err) {}
           }
 
           refreshVariantAfterLoad();
@@ -998,52 +1022,44 @@
 
     document.querySelectorAll('.door-btn').forEach((button) => {
       button.addEventListener('click', (e) => {
-        const clickedDoor = e.target.getAttribute('data-door');
-
-        document.querySelectorAll('.door-btn').forEach((btn) => {
-          const isHexaSelected = clickedDoor === 'Hexa ply';
-          const btnDoor = btn.getAttribute('data-door');
-          btn.classList.toggle(
-            'active',
-            (btnDoor === clickedDoor) || (isHexaSelected && btnDoor === 'Hexa ply')
-          );
-        });
-
-        selectedDoor = clickedDoor;
-        selectedMaterial = clickedDoor === 'Hexa ply' ? 'Hexa ply' : 'Laminate';
+        const doorName = e.target.getAttribute('data-door');
+        if (!doorName) return;
+        selectedDoor = doorName;
+        selectedMaterial = doorName === 'Hexa ply' ? 'Hexa ply' : 'Laminate';
+        document.querySelectorAll('.door-btn').forEach((btn) => btn.classList.remove('active'));
+        e.target.classList.add('active');
         applyVariant(selectedDoor);
+        updatePriceDisplay();
+        updateDescription();
       });
     });
 
     document.querySelectorAll('[data-rotate]').forEach((button) => {
-      button.addEventListener('click', (e) => {
-        const direction = e.currentTarget.getAttribute('data-rotate');
+      button.addEventListener('click', () => {
+        const direction = button.getAttribute('data-rotate');
         rotateBy(direction === 'left' ? -45 : 45);
       });
     });
 
     document.getElementById('request-quote-btn')?.addEventListener('click', () => {
-      const modal = document.getElementById('form-modal');
-      const iframe = document.getElementById('form-modal-iframe');
-      const spinner = document.getElementById('form-modal-spinner');
-      const formUrl = 'https://example.com';
+      const formModal = document.getElementById('form-modal');
+      const formIframe = document.getElementById('form-modal-iframe');
+      const formSpinner = document.getElementById('form-modal-spinner');
+      if (!formModal || !formIframe || !formSpinner) return;
 
-      if (!modal || !iframe || !spinner) return;
-
-      iframe.src = formUrl;
-      modal.style.display = 'flex';
-      spinner.style.display = 'flex';
-
-      iframe.addEventListener('load', () => {
-        spinner.style.display = 'none';
-      }, { once: true });
+      formModal.style.display = 'flex';
+      formSpinner.style.display = 'flex';
+      formIframe.src = 'https://docs.google.com/forms/d/e/1FAIpQLScY0iTMjG2Y6fwJQ9uE1bZaBvme8OT8Cd2YQk5hOb4nLwhtmA/viewform?usp=pp_url&entry.601012123=' + encodeURIComponent(selectedModel) + '&entry.1220951118=' + encodeURIComponent(selectedPackage) + '&entry.1998026145=' + encodeURIComponent(selectedDoor) + '&entry.986319123=' + encodeURIComponent(selectedWheelbase) + '&entry.1542063426=' + encodeURIComponent(selectedCushions);
+      formIframe.onload = () => {
+        formSpinner.style.display = 'none';
+      };
     });
 
     document.getElementById('form-modal-close')?.addEventListener('click', () => {
-      const modal = document.getElementById('form-modal');
-      if (!modal) return;
-      modal.style.display = 'none';
-      document.getElementById('form-modal-iframe').src = '';
+      const formModal = document.getElementById('form-modal');
+      if (formModal) {
+        formModal.style.display = 'none';
+      }
     });
 
     updateProductTitle();
