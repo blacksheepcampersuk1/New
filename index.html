@@ -404,6 +404,8 @@
               id="cupboard-viewer"
               src="Twin%20Bench.glb"
               camera-controls
+              interaction-prompt="auto"
+              interaction-prompt-threshold="2000"
               style="width:100%; height:100%; visibility:hidden; opacity:0; transition:opacity .25s; border-radius:0;">
             </model-viewer>
 
@@ -479,8 +481,12 @@
 
   <div id="form-modal" role="dialog" aria-modal="true" style="position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.6); z-index:9999;">
     <div id="form-modal-card" style="width:92%; max-width:960px; height:86%; background:#fff; border-radius:10px; overflow:hidden; position:relative; box-shadow:0 20px 40px rgba(0,0,0,0.4);">
-      <button id="form-modal-close" aria-label="Close form" style="position:absolute; right:12px; top:12px; z-index:5; padding:8px 10px; border-radius:6px; border:1px solid #ddd; background:#fff; cursor:pointer; font-weight:700;">Close</button>
-      <div id="form-modal-spinner" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.96)); z-index:4;">Loading quote form…</div>
+      <button id="form-modal-close" aria-label="Close form" style="position:absolute; right:12px; top:12px; z-index:5; padding:8px 10px; border-radius:6px; border:1px solid #ddd; background:#fff;">
+        ✕
+      </button>
+      <div id="form-modal-spinner" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.95)); z-index:2;">
+        Loading…
+      </div>
       <iframe id="form-modal-iframe" src="" frameborder="0" title="Quote form" style="width:100%; height:100%; border:0; display:block;"></iframe>
     </div>
   </div>
@@ -782,7 +788,7 @@
             <li>A u-shape seating area that folds out into a large bed, big enough for two. With plenty of storage, and even a designated area to have your own portable toilet.</li>
             <li>A diesel heater</li>
             <li>Cushions with your choice of fabric</li>
-            <li>A charging system to keep you batteries charged up, whether that is utilising your vans alternator via DC-DC charging, solar panels, shore power via a hook-up point, or all of the above to power your van</li>
+            <li>A charging system to keep you batteries charged up, whether that is utilising your vans alternator via DC-DC charging, solar panels, shore power via a hook-up point, or all of the possibilities available in a bespoke conversion.</li>
             <li>An electrical system to suit your needs, including 12V charging points, ceiling lights, reading lights and 240V plug sockets.</li>
           </ul>
         `;
@@ -999,83 +1005,52 @@
           const btnDoor = btn.getAttribute('data-door');
           btn.classList.toggle(
             'active',
-            (isHexaSelected && btnDoor === 'Hexa ply') || (!isHexaSelected && btnDoor === clickedDoor)
+            (btnDoor === clickedDoor) || (isHexaSelected && btnDoor === 'Hexa ply')
           );
         });
 
-        if (clickedDoor === 'Hexa ply') {
-          selectedDoor = 'Black';
-          selectedMaterial = 'Hexa ply';
-        } else {
-          selectedDoor = clickedDoor;
-          selectedMaterial = 'Laminate';
-        }
-
-        updateConfigurator();
-        updatePriceDisplay();
-        updateDescription();
+        selectedDoor = clickedDoor;
+        selectedMaterial = clickedDoor === 'Hexa ply' ? 'Hexa ply' : 'Laminate';
+        applyVariant(selectedDoor);
       });
     });
 
-    viewControls.addEventListener('click', (ev) => {
-      const btn = ev.target.closest('button[data-rotate]');
-      if (!btn) return;
-      const dir = btn.getAttribute('data-rotate');
-      if (dir === 'left') rotateBy(ROTATION_STEP);
-      if (dir === 'right') rotateBy(-ROTATION_STEP);
+    document.querySelectorAll('[data-rotate]').forEach((button) => {
+      button.addEventListener('click', (e) => {
+        const direction = e.currentTarget.getAttribute('data-rotate');
+        rotateBy(direction === 'left' ? -45 : 45);
+      });
     });
 
-    modelViewer.addEventListener('camera-change', () => {
-      try {
-        userHasManualView = true;
-        savedOrbitToRestore = modelViewer.cameraOrbit;
-      } catch (err) {}
+    document.getElementById('request-quote-btn')?.addEventListener('click', () => {
+      const modal = document.getElementById('form-modal');
+      const iframe = document.getElementById('form-modal-iframe');
+      const spinner = document.getElementById('form-modal-spinner');
+      const formUrl = 'https://example.com';
+
+      if (!modal || !iframe || !spinner) return;
+
+      iframe.src = formUrl;
+      modal.style.display = 'flex';
+      spinner.style.display = 'flex';
+
+      iframe.addEventListener('load', () => {
+        spinner.style.display = 'none';
+      }, { once: true });
     });
 
-    setWheelbaseForCurrentModel();
-    syncPackageButtons(selectedPackage);
-    syncCushionButtons();
-    updateConfigurator();
+    document.getElementById('form-modal-close')?.addEventListener('click', () => {
+      const modal = document.getElementById('form-modal');
+      if (!modal) return;
+      modal.style.display = 'none';
+      document.getElementById('form-modal-iframe').src = '';
+    });
+
     updateProductTitle();
     updatePriceDisplay();
     updateDescription();
     updateCoreFeaturesVisibility();
-
-    const WIX_FORM_URLS = {
-      'Ewe.glb': 'https://blacksheepcampers.wixforms.com/f/7516869375056413788',
-      'Twin%20Bench.glb': 'https://blacksheepcampers.wixforms.com/f/7516871135326110811',
-      'Belted%20Ewe.glb': 'https://blacksheepcampers.wixforms.com/f/7516871286258140321'
-    };
-
-    const modal = document.getElementById('form-modal');
-    const modalIframe = document.getElementById('form-modal-iframe');
-    const modalSpinner = document.getElementById('form-modal-spinner');
-    const modalClose = document.getElementById('form-modal-close');
-
-    async function openFormOverlay(url) {
-      modalSpinner.style.display = 'flex';
-      modalIframe.src = url;
-      modal.style.display = 'flex';
-      modalIframe.onload = () => {
-        modalSpinner.style.display = 'none';
-      };
-    }
-
-    function closeFormOverlay() {
-      modal.style.display = 'none';
-      modalIframe.src = '';
-      modalSpinner.style.display = 'flex';
-    }
-
-    modalClose.addEventListener('click', closeFormOverlay);
-    modal.addEventListener('click', (event) => {
-      if (event.target === modal) closeFormOverlay();
-    });
-
-    document.getElementById('request-quote-btn').addEventListener('click', () => {
-      const url = WIX_FORM_URLS[selectedModel] || WIX_FORM_URLS['Twin%20Bench.glb'];
-      openFormOverlay(url);
-    });
+    updateConfigurator();
   </script>
 </body>
 </html>
